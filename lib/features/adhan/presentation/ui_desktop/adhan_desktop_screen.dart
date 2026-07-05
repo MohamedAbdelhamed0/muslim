@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -117,6 +118,22 @@ class _AdhanDesktopScreenState extends ConsumerState<AdhanDesktopScreen> {
                               ),
                               Row(
                                 children: [
+                                  if (kDebugMode) ...[
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFD4AF37),
+                                        foregroundColor: Colors.black,
+                                      ),
+                                      icon: const Icon(Icons.bug_report),
+                                      label: const Text('Test Adhan Alert'),
+                                      onPressed: () {
+                                        ref
+                                            .read(activeAdhanAlertNotifierProvider.notifier)
+                                            .triggerAlert('Fajr (Test)', DateTime.now());
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                  ],
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 8),

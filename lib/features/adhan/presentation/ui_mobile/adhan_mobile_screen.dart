@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -21,6 +22,16 @@ class AdhanMobileScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(loc.appTitle),
         actions: [
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.bug_report, color: Color(0xFFD4AF37)),
+              tooltip: 'Test Adhan Alert & Sound',
+              onPressed: () {
+                ref
+                    .read(activeAdhanAlertNotifierProvider.notifier)
+                    .triggerAlert('Fajr (Test)', DateTime.now());
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: loc.refresh,
