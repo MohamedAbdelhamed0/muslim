@@ -1,36 +1,114 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
+
+import '../../../../core/di/injection.dart';
+import '../../../../core/services/adhan_audio_service.dart';
 import '../../domain/entities/next_prayer.dart';
 import 'adhan_provider.dart';
 
-/// Event model fired when a prayer time is reached
-class PrayerReachedEvent {
+/// Active 5-minute Fullscreen Alert State
+class ActiveAdhanAlert {
   final String prayerName;
   final DateTime time;
-  final DateTime triggeredAt;
+  final int remainingAlertSeconds;
 
-  PrayerReachedEvent({
+  ActiveAdhanAlert({
     required this.prayerName,
     required this.time,
-    required this.triggeredAt,
+    required this.remainingAlertSeconds,
   });
+
+  ActiveAdhanAlert copyWith({int? remainingAlertSeconds}) {
+    return ActiveAdhanAlert(
+      prayerName: prayerName,
+      time: time,
+      remainingAlertSeconds: remainingAlertSeconds ?? this.remainingAlertSeconds,
+    );
+  }
 }
 
-/// Optional callback type for playing audio / sound logic
-typedef OnPrayerReachedCallback = void Function(PrayerReachedEvent event);
+/// Riverpod StateNotifier managing the 5-minute active Adhan alert overlay state
+class ActiveAdhanAlertNotifier extends StateNotifier<ActiveAdhanAlert?> {
+  Timer? _alertTimer;
+  final AdhanAudioService _audioService = getIt<AdhanAudioService>();
 
-/// Riverpod provider for the audio callback function slot.
-/// Users can override this provider or assign a callback to hook in `audioplayers` package.
-final adhanAudioCallbackProvider = StateProvider<OnPrayerReachedCallback?>((ref) {
-  return (event) {
-    if (kDebugMode) {
-      debugPrint('🔔 [ADHAN TIMER CALLBACK TRIGGERED] It is time for ${event.prayerName} prayer! (Triggered at ${event.triggeredAt})');
+  ActiveAdhanAlertNotifier() : super(null);
+
+  Future<void> triggerAlert(String prayerName, DateTime time) async {
+    _alertTimer?.cancel();
+
+    // 1. Play Adhan Sound
+    await _audioService.playAdhan();
+
+    // 2. Windows-specific window behavior: Wake up, focus, set fullscreen
+    if (kIsWeb == false && Platform.isWindows) {
+      try {
+        await windowManager.show();
+        await windowManager.restore();
+        await windowManager.focus();
+        await windowManager.setFullScreen(true);
+      } catch (e) {
+        if (kDebugMode) debugPrint('Error updating window state: $e');
+      }
     }
-  };
+
+    // 3. Set alert state with 300 seconds (5 minutes) countdown
+    state = ActiveAdhanAlert(
+      prayerName: prayerName,
+      time: time,
+      remainingAlertSeconds: 300,
+    );
+
+    // 4. Tick every second down from 5 minutes (300s)
+    _alertTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (state == null) {
+        timer.cancel();
+        return;
+      }
+      final currentRemaining = state!.remainingAlertSeconds - 1;
+      if (currentRemaining <= 0) {
+        dismissAlert();
+      } else {
+        state = state!.copyWith(remainingAlertSeconds: currentRemaining);
+      }
+    });
+  }
+
+  /// Dismisses active alert, stops audio playback, and minimizes window back on Windows
+  Future<void> dismissAlert() async {
+    _alertTimer?.cancel();
+    state = null;
+
+    // Stop Adhan sound
+    await _audioService.stopAdhan();
+
+    // Windows exit fullscreen and minimize
+    if (kIsWeb == false && Platform.isWindows) {
+      try {
+        await windowManager.setFullScreen(false);
+        await windowManager.minimize();
+      } catch (e) {
+        if (kDebugMode) debugPrint('Error restoring window state: $e');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _alertTimer?.cancel();
+    super.dispose();
+  }
+}
+
+final activeAdhanAlertNotifierProvider =
+    StateNotifierProvider<ActiveAdhanAlertNotifier, ActiveAdhanAlert?>((ref) {
+  return ActiveAdhanAlertNotifier();
 });
 
-/// Ticking clock state notifier that holds current device time & next prayer countdown
+/// Ticking clock state notifier holding current device time & next prayer countdown
 class AdhanTimerNotifier extends StateNotifier<NextPrayer?> {
   final Ref _ref;
   Timer? _timer;
@@ -58,29 +136,26 @@ class AdhanTimerNotifier extends StateNotifier<NextPrayer?> {
       final prayers = prayerTimes.toMap();
       prayers.forEach((prayerName, prayerTime) {
         final diffInSeconds = now.difference(prayerTime).inSeconds;
-        
+
         // Match window: between 0 and 2 seconds after prayer time
         if (diffInSeconds >= 0 && diffInSeconds <= 2) {
           final eventKey = '${prayerName}_${prayerTime.day}';
           if (!_triggeredPrayersToday.contains(eventKey)) {
             _triggeredPrayersToday.add(eventKey);
-            _onPrayerTimeReached(prayerName, prayerTime, now);
+            _onPrayerTimeReached(prayerName, prayerTime);
           }
         }
       });
     });
   }
 
-  void _onPrayerTimeReached(String prayerName, DateTime prayerTime, DateTime now) {
-    final event = PrayerReachedEvent(
-      prayerName: prayerName,
-      time: prayerTime,
-      triggeredAt: now,
-    );
-
-    // Call registered callback slot (where audioplayers logic will go)
-    final callback = _ref.read(adhanAudioCallbackProvider);
-    callback?.call(event);
+  void _onPrayerTimeReached(String prayerName, DateTime prayerTime) {
+    if (kDebugMode) {
+      debugPrint('🔔 [ADHAN TIMER RELEASING ALERT] $prayerName prayer reached!');
+    }
+    _ref
+        .read(activeAdhanAlertNotifierProvider.notifier)
+        .triggerAlert(prayerName, prayerTime);
   }
 
   @override
