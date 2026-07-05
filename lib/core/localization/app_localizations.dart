@@ -43,6 +43,24 @@ class AppLocalizations {
   String get desktopDashboard => translate('desktopDashboard');
   String get errorLoading => translate('errorLoading');
   String get settings => translate('settings');
+  String get azkar => translate('azkar');
+  String get azkarReminder => translate('azkarReminder');
+  String get addZikr => translate('addZikr');
+  String get editZikr => translate('editZikr');
+  String get zikrText => translate('zikrText');
+  String get targetCount => translate('targetCount');
+  String get intervalMinutes => translate('intervalMinutes');
+  String get minutes => translate('minutes');
+  String get save => translate('save');
+  String get cancel => translate('cancel');
+  String get tapToCount => translate('tapToCount');
+  String get completedToday => translate('completedToday');
+  String get totalTapsToday => translate('totalTapsToday');
+  String get tapsToday => translate('tapsToday');
+  String get testZikrAlert => translate('testZikrAlert');
+  String get wellDone => translate('wellDone');
+  String get dailyGoal => translate('dailyGoal');
+  String get edit => translate('edit');
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

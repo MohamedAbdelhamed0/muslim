@@ -4,6 +4,9 @@ import '../services/adhan_audio_service.dart';
 import '../../features/adhan/data/datasources/adhan_remote_data_source.dart';
 import '../../features/adhan/data/repositories/adhan_repository_impl.dart';
 import '../../features/adhan/domain/repositories/adhan_repository.dart';
+import '../../features/azkar/data/datasources/azkar_local_data_source.dart';
+import '../../features/azkar/data/repositories/azkar_repository_impl.dart';
+import '../../features/azkar/domain/repositories/azkar_repository.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -19,5 +22,14 @@ void setupLocator() {
 
   getIt.registerLazySingleton<AdhanRepository>(
     () => AdhanRepositoryImpl(getIt<AdhanRemoteDataSource>()),
+  );
+
+  // Features - Azkar
+  getIt.registerLazySingleton<AzkarLocalDataSource>(
+    () => AzkarLocalDataSourceImpl(),
+  );
+
+  getIt.registerLazySingleton<AzkarRepository>(
+    () => AzkarRepositoryImpl(getIt<AzkarLocalDataSource>()),
   );
 }

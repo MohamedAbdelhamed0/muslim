@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../controllers/adhan_provider.dart';
@@ -35,6 +36,11 @@ class _AdhanDesktopScreenState extends ConsumerState<AdhanDesktopScreen> {
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: (index) {
                   setState(() => _selectedIndex = index);
+                  if (index == 0) {
+                    context.go('/');
+                  } else if (index == 1) {
+                    context.go('/azkar');
+                  }
                 },
                 labelType: NavigationRailLabelType.all,
                 leading: Padding(
@@ -48,9 +54,9 @@ class _AdhanDesktopScreenState extends ConsumerState<AdhanDesktopScreen> {
                     label: Text(loc.desktopDashboard),
                   ),
                   NavigationRailDestination(
-                    icon: const Icon(Icons.settings_outlined),
-                    selectedIcon: const Icon(Icons.settings),
-                    label: Text(loc.settings),
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                    selectedIcon: const Icon(Icons.auto_awesome),
+                    label: Text(loc.azkar),
                   ),
                 ],
               ),

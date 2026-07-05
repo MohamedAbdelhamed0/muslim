@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../controllers/adhan_provider.dart';
@@ -38,6 +39,24 @@ class AdhanMobileScreen extends ConsumerWidget {
             onPressed: () {
               ref.read(adhanNotifierProvider.notifier).fetchPrayerTimes();
             },
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 1) {
+            context.go('/azkar');
+          }
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.mosque),
+            label: loc.appTitle,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.auto_awesome),
+            label: loc.azkar,
           ),
         ],
       ),
