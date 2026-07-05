@@ -13,20 +13,24 @@ abstract class AzkarLocalDataSource {
   Future<void> saveSettings(AzkarSettingsModel settings);
   Future<void> incrementCompletedCount();
   Future<void> recordZikrTap(String zikrId, int addedTaps);
+  Future<Map<String, dynamic>> getDailyLogMap();
 }
 
 class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
   static const String _azkarBoxName = 'azkar_box';
   static const String _settingsBoxName = 'azkar_settings_box';
+  static const String _logsBoxName = 'azkar_real_daily_logs_box';
 
   Box? _azkarBox;
   Box? _settingsBox;
+  Box? _logsBox;
 
   @override
   Future<void> init() async {
     await Hive.initFlutter();
     _azkarBox = await Hive.openBox(_azkarBoxName);
     _settingsBox = await Hive.openBox(_settingsBoxName);
+    _logsBox = await Hive.openBox(_logsBoxName);
 
     // Seed defaults if empty
     if (_azkarBox!.isEmpty) {
@@ -118,7 +122,6 @@ class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
 
     if (raw is Map) {
       final model = AzkarSettingsModel.fromJson(Map<String, dynamic>.from(raw));
-      // Reset daily counts if date changed
       if (model.lastDate != todayStr) {
         final newModel = AzkarSettingsModel(
           intervalMinutes: model.intervalMinutes,
@@ -158,6 +161,9 @@ class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
       lastDate: todayStr,
     );
     await saveSettings(updated);
+
+    // Update real daily analytics log
+    await _updateDailyLog(todayStr, addedTaps: 0, addedSessions: 1);
   }
 
   @override
@@ -181,7 +187,6 @@ class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
       await _azkarBox!.put(zikrId, updatedModel.toJson());
     }
 
-    // Also update total daily taps in settings
     final currentSettings = await getSettings();
     final updatedSettings = AzkarSettingsModel(
       intervalMinutes: currentSettings.intervalMinutes,
@@ -192,5 +197,64 @@ class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
       lastDate: todayStr,
     );
     await saveSettings(updatedSettings);
+
+    // Update real daily analytics log
+    await _updateDailyLog(todayStr, addedTaps: addedTaps, addedSessions: 0);
+  }
+
+  Future<void> _updateDailyLog(String dateStr, {required int addedTaps, required int addedSessions}) async {
+    if (_logsBox == null) await init();
+    final raw = _logsBox!.get(dateStr);
+    int existingTaps = 0;
+    int existingSessions = 0;
+
+    if (raw is Map) {
+      existingTaps = raw['taps'] as int? ?? 0;
+      existingSessions = raw['completedSessions'] as int? ?? 0;
+    }
+
+    await _logsBox!.put(dateStr, {
+      'dateStr': dateStr,
+      'taps': existingTaps + addedTaps,
+      'completedSessions': existingSessions + addedSessions,
+    });
+  }
+
+  @override
+  Future<Map<String, dynamic>> getDailyLogMap() async {
+    if (_logsBox == null) await init();
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final currentSettings = await getSettings();
+
+    // Ensure real entry exists for today
+    if (!_logsBox!.containsKey(todayStr)) {
+      await _logsBox!.put(todayStr, {
+        'dateStr': todayStr,
+        'taps': currentSettings.totalTapsToday,
+        'completedSessions': currentSettings.completedToday,
+      });
+    } else {
+      final raw = _logsBox!.get(todayStr);
+      if (raw is Map) {
+        final currentTaps = raw['taps'] as int? ?? 0;
+        final currentSessions = raw['completedSessions'] as int? ?? 0;
+        if (currentSettings.totalTapsToday > currentTaps || currentSettings.completedToday > currentSessions) {
+          await _logsBox!.put(todayStr, {
+            'dateStr': todayStr,
+            'taps': currentSettings.totalTapsToday > currentTaps ? currentSettings.totalTapsToday : currentTaps,
+            'completedSessions': currentSettings.completedToday > currentSessions ? currentSettings.completedToday : currentSessions,
+          });
+        }
+      }
+    }
+
+    final map = <String, dynamic>{};
+    for (final key in _logsBox!.keys) {
+      final val = _logsBox!.get(key);
+      if (val != null) {
+        map[key.toString()] = val;
+      }
+    }
+    return map;
   }
 }

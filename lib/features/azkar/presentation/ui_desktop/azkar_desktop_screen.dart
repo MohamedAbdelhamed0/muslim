@@ -30,6 +30,8 @@ class AzkarDesktopScreen extends ConsumerWidget {
                 onDestinationSelected: (index) {
                   if (index == 0) {
                     context.go('/');
+                  } else if (index == 2) {
+                    context.go('/analytics');
                   }
                 },
                 labelType: NavigationRailLabelType.all,
@@ -47,6 +49,11 @@ class AzkarDesktopScreen extends ConsumerWidget {
                     icon: const Icon(Icons.auto_awesome_outlined),
                     selectedIcon: const Icon(Icons.auto_awesome),
                     label: Text(loc.azkar),
+                  ),
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.bar_chart_outlined),
+                    selectedIcon: const Icon(Icons.bar_chart),
+                    label: Text(loc.analytics),
                   ),
                 ],
               ),

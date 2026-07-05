@@ -7,6 +7,9 @@ import '../../features/adhan/domain/repositories/adhan_repository.dart';
 import '../../features/azkar/data/datasources/azkar_local_data_source.dart';
 import '../../features/azkar/data/repositories/azkar_repository_impl.dart';
 import '../../features/azkar/domain/repositories/azkar_repository.dart';
+import '../../features/azkar_analytics/data/datasources/analytics_local_data_source.dart';
+import '../../features/azkar_analytics/data/repositories/analytics_repository_impl.dart';
+import '../../features/azkar_analytics/domain/repositories/analytics_repository.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -31,5 +34,14 @@ void setupLocator() {
 
   getIt.registerLazySingleton<AzkarRepository>(
     () => AzkarRepositoryImpl(getIt<AzkarLocalDataSource>()),
+  );
+
+  // Features - Azkar Analytics
+  getIt.registerLazySingleton<AnalyticsLocalDataSource>(
+    () => AnalyticsLocalDataSourceImpl(getIt<AzkarLocalDataSource>()),
+  );
+
+  getIt.registerLazySingleton<AnalyticsRepository>(
+    () => AnalyticsRepositoryImpl(getIt<AnalyticsLocalDataSource>()),
   );
 }

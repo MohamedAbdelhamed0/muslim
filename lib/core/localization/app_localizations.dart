@@ -61,6 +61,17 @@ class AppLocalizations {
   String get wellDone => translate('wellDone');
   String get dailyGoal => translate('dailyGoal');
   String get edit => translate('edit');
+  String get analytics => translate('analytics');
+  String get day => translate('day');
+  String get week => translate('week');
+  String get month => translate('month');
+  String get year => translate('year');
+  String get totalTapsAllTime => translate('totalTapsAllTime');
+  String get totalSessions => translate('totalSessions');
+  String get activeStreak => translate('activeStreak');
+  String get days => translate('days');
+  String get mostRecited => translate('mostRecited');
+  String get tasbeehProgress => translate('tasbeehProgress');
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

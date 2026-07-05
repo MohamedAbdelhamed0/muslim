@@ -47,6 +47,8 @@ class AdhanMobileScreen extends ConsumerWidget {
         onTap: (index) {
           if (index == 1) {
             context.go('/azkar');
+          } else if (index == 2) {
+            context.go('/analytics');
           }
         },
         items: [
@@ -57,6 +59,10 @@ class AdhanMobileScreen extends ConsumerWidget {
           BottomNavigationBarItem(
             icon: const Icon(Icons.auto_awesome),
             label: loc.azkar,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.bar_chart),
+            label: loc.analytics,
           ),
         ],
       ),

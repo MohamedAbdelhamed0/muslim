@@ -40,6 +40,8 @@ class _AdhanDesktopScreenState extends ConsumerState<AdhanDesktopScreen> {
                     context.go('/');
                   } else if (index == 1) {
                     context.go('/azkar');
+                  } else if (index == 2) {
+                    context.go('/analytics');
                   }
                 },
                 labelType: NavigationRailLabelType.all,
@@ -57,6 +59,11 @@ class _AdhanDesktopScreenState extends ConsumerState<AdhanDesktopScreen> {
                     icon: const Icon(Icons.auto_awesome_outlined),
                     selectedIcon: const Icon(Icons.auto_awesome),
                     label: Text(loc.azkar),
+                  ),
+                  NavigationRailDestination(
+                    icon: const Icon(Icons.bar_chart_outlined),
+                    selectedIcon: const Icon(Icons.bar_chart),
+                    label: Text(loc.analytics),
                   ),
                 ],
               ),
